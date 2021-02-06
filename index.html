@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>iGotcha Media Code Challenge</title>
+    <!-- style -->
+    <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+
+    <div class="title">
+        <h2>iGotcha Media Code Challenge</h2>
+        <p>Short explanation: <br>I see <a href="https://bytebucket.org/igotchamedia/fullstack-challenge1/raw/6cc70f3bab253705684964f0da699634a799e67d/mockup.png" target="_blank">the mockup</a> is mostly conceptual and there is no established design yet, so I styled the page by my taste. I decided to remove the select box and to put the functionality of searching by name or category directly in the text input, It's a way better user experience. The technologies that I used [ javascript, vue.js, css, html ]. In this case, I applied Vue as a library, there is no need here for a vue.js framework, router, node, etc. By requirement, the search input should filter when "user types more than 3 characters", I made it at 3 or more because there are some fundamental alcohols as Gin that are with 3 letters and the search results will not be satisfying in some cases. I spent 3 hours and 40 min in coding.</p>
+        <br>
+
+        <p>Assumptions:<br> Most of the things <b>I did</b> instead of talking about them, but there is still some room for improvement. Now when the user types the first 2 chars, the card container is empty. It could be made some user feedback like a spinner or just a text that says "3 or more characters are required". Also if there is no result, there should be text feedback that says "No matches" or something similar. It could be included a library that manages cards, like Masonry. In this case, it won't be necessarily to hide the long text and clip it in order to have all the cards with the same height, it will look better and more organic.</p>
+        <br>
+        <p>author: Nikolay Atanasov</p>
+
+    </div>
+    <div id="app">
+        <!-- header with searchbar -->
+        <div class="header">
+            <div class="header__search-bar">
+                <p class="header__search-icon">🔍</p>
+                <input type="text" placeholder="Search by name or ingredient" @keyup="searchCocktails($event)">
+            </div>
+        </div>
+
+        <!-- cocktails container -->
+        <div class="cocktails-container">
+            <div class="cocktails-container__cocktail" v-for="(cocktail , index) in cocktails" :key="index" v-show="!cocktail.hide">
+
+                <!-- item header -->
+                <div class="cocktail__header">
+                    <img :src="cocktail.strDrinkThumb" alt="">
+                    <div class="cocktail__header-text">
+                        <p class="cocktail__header-text__title">{{cocktail.strDrink}}</p>
+                        <p class="cocktail__header-text__category">{{cocktail.strCategory}}</p>
+                    </div>
+                </div>
+
+                <!-- item body -->
+                <div class="cocktail__body">
+                    <img :src="cocktail.strDrinkThumb" :alt="`${cocktail.strDrink} cocktail image`">
+                    <p class="cocktail__body-instructgions" :title="cocktail.strInstructions">{{cocktail.strInstructions}}</p>
+                </div>
+
+                <!-- item footer -->
+                <div class="cocktail__footer">
+                    <p>OPEN</p>
+                    <p>SHARE</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- vue.js cdn -->
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.12/dist/vue.js"></script>
+    <script>
+        new Vue({
+            el: "#app",
+            data() {
+                return {
+                    cocktails: [],
+                };
+            },
+            mounted() {
+                this.getCocktails();
+            },
+            methods: {
+                getCocktails() {
+                    fetch(`https://www.thecocktaildb.com/api/json/v1/1/search.php?f=m`)
+                        .then((response) => response.json())
+                        .then((data) => {
+                            data.drinks.forEach(drink => {
+                                // create new value for search in each drink
+                                drink.searchParams = drink.strDrink;
+                                Object.keys(drink).forEach(objKey => {
+                                    // appending Ingredients to the drink.searchParams
+                                    if (drink[objKey] && objKey.includes("strIngredient")) drink.searchParams += ` ${drink[objKey]}`;
+                                });
+                            });
+                            this.cocktails = data.drinks;
+                        });
+                },
+                searchCocktails(e) {
+                    const _input = e.target.value.trim().toLowerCase();
+                    if (_input.length < 1) {
+                        // if the search input is empty
+                        this.cocktails.forEach(drink => drink.hide = false);
+                    } else if (_input.length < 3) {
+                        // when the input is les than 3 chars
+                        // I allowed myself to decrease the required min input to 3 or more because gin is a very 
+                        // common cocktail ingredient and the user will miss a lot of valuable results
+                        this.cocktails.forEach(drink => drink.hide = true);
+                    } else {
+                        // filter state
+                        this.cocktails.forEach(drink => {
+                            drink.hide = drink.searchParams.toLowerCase().includes(_input) ? false : true;
+                        });
+                    }
+                    // rewriting this. cocktails array to force vue.js to rewrite the cocktails
+                    this.cocktails = [...this.cocktails];
+                }
+            },
+        });
+    </script>
+</body>
+
+</html>
